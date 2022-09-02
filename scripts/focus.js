@@ -165,6 +165,24 @@ function submit_focus() {
         focusKeys[focus.internalID] = focus.id;
         focus_edit_select_focus(focus.internalID);
 }
+function delete_focus(focus) {
+    for (focus2 in focuses) {
+        if (focuses[focus2].reverse_prerequisites.includes(focus)) {
+            focuses[focus2].reverse_prerequisites.pop(focus);
+        }
+        if (focuses[focus2].reverse_or_prerequisites.includes(focus)) {
+            focuses[focus2].reverse_or_prerequisites.pop(focus);
+        }
+        for (int in focuses[focus2].prerequisites) {
+            while (focuses[focus2].prerequisites[int].includes(focus)) {
+                focus_edit_del_prereq_focus(int, focuses[focus2].prerequisites[int].indexOf(focus), focus2);
+            }
+        }
+    }
+    $(`#focus-${focus}`).remove();
+    $(`.line-focus-${focus}`).remove();
+    delete focuses[focus];
+}
 function focus_click(id) {
     if (editing_focus_id == id) {
         focus_edit_new_focus();
@@ -600,31 +618,38 @@ function focus_edit_change_prereq_focus(int, int2) {
     draw_focus_prerequisites(editing_focus_id);
 }
 
-function focus_edit_del_prereq_focus(int, int2) {
-    old_prereq = focuses[editing_focus_id].prerequisites[int][int2];
-    if (focuses[editing_focus_id].prerequisites[int].length == 1) {
-        focuses[old_prereq].reverse_prerequisites.splice(focuses[old_prereq].reverse_prerequisites.indexOf(editing_focus_id, 1));
+function focus_edit_del_prereq_focus(int, int2, revfocus=editing_focus_id) {
+    old_prereq = focuses[revfocus].prerequisites[int][int2];
+    if (focuses[revfocus].prerequisites[int].length == 1) {
+        focuses[old_prereq].reverse_prerequisites.splice(focuses[old_prereq].reverse_prerequisites.indexOf(revfocus, 1));
     }
     else {
-        focuses[old_prereq].reverse_or_prerequisites.splice(focuses[old_prereq].reverse_or_prerequisites.indexOf(editing_focus_id, 1));
+        focuses[old_prereq].reverse_or_prerequisites.splice(focuses[old_prereq].reverse_or_prerequisites.indexOf(revfocus, 1));
     }
-    focuses[editing_focus_id].prerequisites[int].splice(int2, 1);
-    do_prerequisites();
-    draw_focus_prerequisites(editing_focus_id);
+    focuses[revfocus].prerequisites[int].splice(int2, 1);
+    if (focuses[revfocus].prerequisites[int].length == 0) {
+        focus_edit_del_prereq(int, revfocus);
+    }
+    if (revfocus == editing_focus_id) {
+        do_prerequisites();
+    }
+    draw_focus_prerequisites(revfocus);
 }
 
-function focus_edit_del_prereq(int) {
-    for (focus of focuses[editing_focus_id].prerequisites[int]) {
-        if (focuses[editing_focus_id].prerequisites[int].length == 1) {
-            focuses[focus].reverse_prerequisites.splice(focuses[focus].reverse_prerequisites.indexOf(editing_focus_id, 1));
+function focus_edit_del_prereq(int, revfocus=editing_focus_id) {
+    for (focus of focuses[revfocus].prerequisites[int]) {
+        if (focuses[revfocus].prerequisites[int].length == 1) {
+            focuses[focus].reverse_prerequisites.splice(focuses[focus].reverse_prerequisites.indexOf(revfocus, 1));
         }
         else {
-            focuses[focus].reverse_or_prerequisites.splice(focuses[focus].reverse_or_prerequisites.indexOf(editing_focus_id, 1));
+            focuses[focus].reverse_or_prerequisites.splice(focuses[focus].reverse_or_prerequisites.indexOf(revfocus, 1));
         }
     }
-    focuses[editing_focus_id].prerequisites.splice(int, 1);
-    $(`.prereq-${int}`).remove();
-    do_prerequisites();
-    draw_focus_prerequisites(editing_focus_id);
+    focuses[revfocus].prerequisites.splice(int, 1);
+    if (revfocus == editing_focus_id) {
+        $(`.prereq-${int}`).remove();
+        do_prerequisites();
+    }
+    draw_focus_prerequisites(revfocus);
 }
 
