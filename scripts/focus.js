@@ -4,7 +4,6 @@ editing_focus_id = -1
 focuses = {}
 focusKeys = {}
 editing_focus = false;
-$('#focus_prereq_all').hide();
 
 function Focus(internalID) {
     this.internalID = internalID;
@@ -138,32 +137,44 @@ function draw_focus_prerequisites(focus) {
     }
 }
 function submit_focus() {
-        latestFocusID += 1;
-        focus = new Focus(latestFocusID);
-        focus.x = parseInt($("#focus_x").val());
-        focus.y = parseInt($("#focus_y").val());
-        focus.id = $("#focus_id").val();
-        focus.name = $("#focus_name").val();
-        focus.icon = $("#focus_icon").val();
-        focus.block_available = focus_monaco_available.getValue();
-        focus.block_bypass = focus_monaco_bypass.getValue();
-        focus.block_reward = focus_monaco_reward.getValue();
-        focus.block_allow = focus_monaco_allow.getValue();
-        focus.block_cancel = focus_monaco_cancel.getValue();
-        focus.block_historical = focus_monaco_historical.getValue();
-        focus.block_tooltip = focus_monaco_tooltip.getValue();
-        focus.block_select = focus_monaco_select.getValue();
+    latestFocusID += 1;
+    focus = new Focus(latestFocusID);
+    focus.x = parseInt($("#focus_x").val());
+    focus.y = parseInt($("#focus_y").val());
+    focus.id = $("#focus_id").val();
+    focus.name = $("#focus_name").val();
+    focus.icon = $("#focus_icon").val();
+    focus.block_available = focus_monaco_available.getValue();
+    focus.block_bypass = focus_monaco_bypass.getValue();
+    focus.block_reward = focus_monaco_reward.getValue();
+    focus.block_allow = focus_monaco_allow.getValue();
+    focus.block_cancel = focus_monaco_cancel.getValue();
+    focus.block_historical = focus_monaco_historical.getValue();
+    focus.block_tooltip = focus_monaco_tooltip.getValue();
+    focus.block_select = focus_monaco_select.getValue();
+    focus.prerequisites = new_prerequisites;
+    for (int in new_prerequisites) {
+        for (int2 in new_prerequisites[int]) {
+            if (new_prerequisites[int].length == 1) {
+                focuses[ new_prerequisites[int][int2] ].reverse_prerequisites.push(new_prerequisites[int][int2]);
+            }
+            else {
+                focuses[ new_prerequisites[int][int2] ].reverse_or_prerequisites.push(new_prerequisites[int][int2]);
+            }
+        }
+    }
+    draw_focus_prerequisites(latestFocusID);
 
-        
-        $("#focus-panel-focuses").append(`<div onclick="focus_click(${focus.internalID})" class="focus" id="focus-${focus.internalID}" style="left: ${focus.x*96+13}px; top: ${focus.y*130}px">
-        <img class="center" style="position: absolute; top: 40px" src="assets/focus_unavailable_bg.png" />
-        <p id="focus-${focus.internalID}-name" class="center" style="position: absolute; top: 76px; font-size: 14px">${focus.name}</p>
-        <img id="focus-${focus.internalID}-icon" class="focus-icon center" style="position: absolute; top: -44px" src="assets/focuses/${focusesgfx[focus.icon]}" />
-        </div>`);
-        focuses[focus.internalID] = focus;
-        focusKeys[focus.id] = focus.internalID;
-        focusKeys[focus.internalID] = focus.id;
-        focus_edit_select_focus(focus.internalID);
+    
+    $("#focus-panel-focuses").append(`<div onclick="focus_click(${focus.internalID})" class="focus" id="focus-${focus.internalID}" style="left: ${focus.x*96+13}px; top: ${focus.y*130}px">
+    <img class="center" style="position: absolute; top: 40px" src="assets/focus_unavailable_bg.png" />
+    <p id="focus-${focus.internalID}-name" class="center" style="position: absolute; top: 76px; font-size: 14px">${focus.name}</p>
+    <img id="focus-${focus.internalID}-icon" class="focus-icon center" style="position: absolute; top: -44px" src="assets/focuses/${focusesgfx[focus.icon]}" />
+    </div>`);
+    focuses[focus.internalID] = focus;
+    focusKeys[focus.id] = focus.internalID;
+    focusKeys[focus.internalID] = focus.id;
+    focus_edit_select_focus(focus.internalID);
 }
 function delete_focus(focus) {
     for (focus2 in focuses) {
@@ -195,7 +206,6 @@ monaco_init = false;
 function focus_edit_new_focus() {
     editing_focus_id = -1;
     editing_focus = false;
-    $('#focus_prereq_all').hide();
     $("#focus_id").val("TAG_new_focus");
     $("#focus_name").val("New Focus");
     $("#focus_icon").val("GFX_goal_unknown");
@@ -209,6 +219,8 @@ function focus_edit_new_focus() {
         focus_monaco_tooltip.setValue("");
         focus_monaco_select.setValue("");
     }
+    new_prerequisites = [];
+    do_prerequisites();
     // $("#focus_x").val(0);
     // $("#focus_y").val(0);
     $("#submit_focus").show();
@@ -238,7 +250,13 @@ function focus_edit_select_focus(id) {
 }
 function do_prerequisites() {
     $(".prereq").remove();
-    for (int in focuses[editing_focus_id].prerequisites) {
+    if (editing_focus) {
+        temp_list = focuses[editing_focus_id].prerequisites;
+    }
+    else {
+        temp_list = new_prerequisites;
+    }
+    for (int in temp_list) {
         $(`#prereq-container`).append(`
         <div id="prereq-${int}" class="prereq prereq-${int}">
             <div id="prereq-${int}-focuses" style="display:inline;"></div>
@@ -247,14 +265,14 @@ function do_prerequisites() {
         </div>
         `);
         //int2 = focuses[editing_focus_id].prerequisites[int].length-1;
-        for (int2 in focuses[editing_focus_id].prerequisites[int]) {
+        for (int2 in temp_list[int]) {
             options = "";
             i = 0;
             first = -1;
             console.log("log 3")
             for (focus in focuses) {
                 if (focus != editing_focus_id) {
-                    if (focus == focuses[editing_focus_id].prerequisites[int][int2]) { //<img class="small-focus-icon" src="assets/focuses/${focusesgfx[focuses[editing_focus_id].icon]}"></img>
+                    if (focus == temp_list[int][int2]) { //<img class="small-focus-icon" src="assets/focuses/${focusesgfx[focuses[editing_focus_id].icon]}"></img>
                         first = focus;
                         options += `<option selected id="prereq-${int}-${int2}-${focus}">${focuses[focus].name}</option>`;
                     }
@@ -592,64 +610,104 @@ function focus_edit_add_prereq_focus(int) {
             i += 1;
         }
     }
-    focuses[editing_focus_id].prerequisites[int].push(parseInt(first));
-    focuses[first].reverse_prerequisites.push(parseInt(editing_focus_id));
+    if (editing_focus) {
+        focuses[editing_focus_id].prerequisites[int].push(parseInt(first));
+        focuses[first].reverse_prerequisites.push(parseInt(editing_focus_id));
+        draw_focus_prerequisites(editing_focus_id);
+    }
+    else {
+        new_prerequisites[int].push(parseInt(first));
+    }
     do_prerequisites();
-    draw_focus_prerequisites(editing_focus_id);
 }
 
 function focus_edit_add_prereq() {
-    int = focuses[editing_focus_id].prerequisites.length;
-    focuses[editing_focus_id].prerequisites.push([]);
-    do_prerequisites();
-    focus_edit_add_prereq_focus(int);
+    if (editing_focus) {
+        int = focuses[editing_focus_id].prerequisites.length;
+        focuses[editing_focus_id].prerequisites.push([]);
+        do_prerequisites();
+        focus_edit_add_prereq_focus(int);
+    }
+    else {
+        int = new_prerequisites.length;
+        new_prerequisites.push([]);
+        do_prerequisites();
+        focus_edit_add_prereq_focus(int);
+    }
 }
 
 function focus_edit_change_prereq_focus(int, int2) {
-    old_prereq = focuses[editing_focus_id].prerequisites[int][int2];
-    if (focuses[editing_focus_id].prerequisites[int].length == 1) {
-        focuses[old_prereq].reverse_prerequisites.splice(focuses[old_prereq].reverse_prerequisites.indexOf(editing_focus_id, 1));
-        focuses[parseInt($(`#prereq-${int}-${int2}`).val())].reverse_prerequisites.push(parseInt(editing_focus_id));
+    if(editing_focus) {
+        old_prereq = focuses[editing_focus_id].prerequisites[int][int2];
+        if (focuses[editing_focus_id].prerequisites[int].length == 1) {
+            focuses[old_prereq].reverse_prerequisites.splice(focuses[old_prereq].reverse_prerequisites.indexOf(editing_focus_id, 1));
+            focuses[parseInt($(`#prereq-${int}-${int2}`).val())].reverse_prerequisites.push(parseInt(editing_focus_id));
+        }
+        else {
+            focuses[old_prereq].reverse_or_prerequisites.splice(focuses[old_prereq].reverse_prerequisites.indexOf(editing_focus_id, 1));
+        }
+        focuses[editing_focus_id].prerequisites[int][int2] = parseInt($(`#prereq-${int}-${int2}`).val());
+        draw_focus_prerequisites(editing_focus_id);
     }
     else {
-        focuses[old_prereq].reverse_or_prerequisites.splice(focuses[old_prereq].reverse_prerequisites.indexOf(editing_focus_id, 1));
+        old_prereq = new_prerequisites[int][int2];
+        new_prerequisites[int][int2] = parseInt($(`#prereq-${int}-${int2}`).val());
     }
-    focuses[editing_focus_id].prerequisites[int][int2] = parseInt($(`#prereq-${int}-${int2}`).val());
-    draw_focus_prerequisites(editing_focus_id);
 }
 
 function focus_edit_del_prereq_focus(int, int2, revfocus=editing_focus_id) {
-    old_prereq = focuses[revfocus].prerequisites[int][int2];
-    if (focuses[revfocus].prerequisites[int].length == 1) {
-        focuses[old_prereq].reverse_prerequisites.splice(focuses[old_prereq].reverse_prerequisites.indexOf(revfocus, 1));
+    if (editing_focus) {
+        old_prereq = focuses[revfocus].prerequisites[int][int2];
+        if (focuses[revfocus].prerequisites[int].length == 1) {
+            focuses[old_prereq].reverse_prerequisites.splice(focuses[old_prereq].reverse_prerequisites.indexOf(revfocus, 1));
+        }
+        else {
+            focuses[old_prereq].reverse_or_prerequisites.splice(focuses[old_prereq].reverse_or_prerequisites.indexOf(revfocus, 1));
+        }
+        focuses[revfocus].prerequisites[int].splice(int2, 1);
+        if (focuses[revfocus].prerequisites[int].length == 0) {
+            focus_edit_del_prereq(int, revfocus);
+        }
+        if (revfocus == editing_focus_id) {
+            do_prerequisites();
+        }
+        draw_focus_prerequisites(revfocus);
     }
     else {
-        focuses[old_prereq].reverse_or_prerequisites.splice(focuses[old_prereq].reverse_or_prerequisites.indexOf(revfocus, 1));
+        old_prereq = new_prerequisites[int][int2];
+        new_prerequisites[int].splice(int2, 1);
+        if (new_prerequisites[int].length == 0) {
+            focus_edit_del_prereq(int, -1);
+        }
+        if (revfocus == -1) {
+            do_prerequisites();
+        }
     }
-    focuses[revfocus].prerequisites[int].splice(int2, 1);
-    if (focuses[revfocus].prerequisites[int].length == 0) {
-        focus_edit_del_prereq(int, revfocus);
-    }
-    if (revfocus == editing_focus_id) {
-        do_prerequisites();
-    }
-    draw_focus_prerequisites(revfocus);
 }
 
 function focus_edit_del_prereq(int, revfocus=editing_focus_id) {
-    for (focus of focuses[revfocus].prerequisites[int]) {
-        if (focuses[revfocus].prerequisites[int].length == 1) {
-            focuses[focus].reverse_prerequisites.splice(focuses[focus].reverse_prerequisites.indexOf(revfocus, 1));
+    if (editing_focus) {
+        for (focus of focuses[revfocus].prerequisites[int]) {
+            if (focuses[revfocus].prerequisites[int].length == 1) {
+                focuses[focus].reverse_prerequisites.splice(focuses[focus].reverse_prerequisites.indexOf(revfocus, 1));
+            }
+            else {
+                focuses[focus].reverse_or_prerequisites.splice(focuses[focus].reverse_or_prerequisites.indexOf(revfocus, 1));
+            }
         }
-        else {
-            focuses[focus].reverse_or_prerequisites.splice(focuses[focus].reverse_or_prerequisites.indexOf(revfocus, 1));
+        focuses[revfocus].prerequisites.splice(int, 1);
+        if (revfocus == editing_focus_id) {
+            $(`.prereq-${int}`).remove();
+            do_prerequisites();
+        }
+        draw_focus_prerequisites(revfocus);
+    }
+    else {
+        new_prerequisites.splice(int, 1);
+        if (revfocus == -1) {
+            $(`.prereq-${int}`).remove();
+            do_prerequisites();
         }
     }
-    focuses[revfocus].prerequisites.splice(int, 1);
-    if (revfocus == editing_focus_id) {
-        $(`.prereq-${int}`).remove();
-        do_prerequisites();
-    }
-    draw_focus_prerequisites(revfocus);
 }
 
