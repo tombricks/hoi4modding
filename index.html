@@ -17,10 +17,16 @@
                 <button onclick="load_focuses()">Load Focuses</button>
                 <hr>
                 <div id="edit-focus">
+                    <button id="submit_focus" onclick="submit_focus()">Create Focus</button><br>
                     <b>Focus ID</b>: <input onchange="focus_edit_change_id()" type="text" id="focus_id" name="focus_id"><button onclick="focus_edit_generate_id()">Generate</button><br>
                     <b>Focus Name</b>: <input oninput="focus_edit_change_name()" type="text" id="focus_name" name="focus_name"><br>
                     <b>Focus Icon</b>: <input onchange="focus_edit_change_icon()" type="text" id="focus_icon" name="focus_icon"> <button class="focus-gfx-button" onclick="focus_gfx_button()">View Focus GFX</button><br>
                     <b>Position</b>: X: <input onchange="focus_edit_change_x()" min=0 step=1 value=0 type="number" id="focus_x" name="focus_x">Y: <input onchange="focus_edit_change_y()" min=0 step=1 value=0 type="number" id="focus_y" name="focus_y"><br>
+                    <b>Mutually Exclusive</b>:<br>
+                    <div id="focus_mutual_box">
+                        <div id="focus_mutuals"></div>
+                        <button onclick="focus_edit_add_mutual()" id="add_mutual">+</button>
+                    </div>
                     <div id="focus_prereq_all">
                         <b>Prerequisites</b>:<br>
                         <div id="focus_prereq_box">
@@ -49,8 +55,7 @@
                         <div id="focus_monaco_tooltip" class="monaco-container"></div><br>
                         <b>Select Effect (Effect Block)</b>:
                         <div id="focus_monaco_select" class="monaco-container"></div><br>
-                    </div><br>
-                    <button id="submit_focus" onclick="submit_focus()">Create Focus</button>
+                    </div>
                 </div>
             </div>
             <div id="focus-panel">

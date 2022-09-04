@@ -15,6 +15,7 @@ function Focus(internalID) {
     this.prerequisites = [];
     this.reverse_prerequisites = [];
     this.reverse_or_prerequisites = [];
+    this.mutually_exclusives = [];
     this.block_available = "";
     this.block_bypass = "";
     this.block_reward = "";
@@ -135,6 +136,17 @@ function draw_focus_prerequisites(focus) {
     for (lead of focuses[focus].reverse_or_prerequisites) {
         draw_prerequisite_line(focus, lead, "prerequisite-or");
     }
+
+    for(mutual of focuses[focus].mutually_exclusives) {
+        console.log(focuses[focus].mutually_exclusives);
+        console.log(mutual);
+        if (focuses[mutual].x > focuses[focus].x) {
+            create_horizontal_line(`mutually-exclusive-${focus}-${mutual}`, `line-focus-${focus} line-focus-${mutual} prerequisite mutually-exclusive-${focus}-${mutual} mutually-exclusive`, focuses[focus].x, focuses[focus].y, focuses[mutual].x-focuses[focus].x);
+        }
+        else {
+            create_horizontal_line(`mutually-exclusive-${focus}-${mutual}`, `line-focus-${focus} line-focus-${mutual} prerequisite mutually-exclusive-${focus}-${mutual} mutually-exclusive`, focuses[mutual].x, focuses[focus].y, focuses[focus].x-focuses[mutual].x);
+        }
+    }
 }
 function submit_focus() {
     latestFocusID += 1;
@@ -153,17 +165,22 @@ function submit_focus() {
     focus.block_tooltip = focus_monaco_tooltip.getValue();
     focus.block_select = focus_monaco_select.getValue();
     focus.prerequisites = new_prerequisites;
+    focus.mutually_exclusives = new_mutually_exclusives;
     for (int in new_prerequisites) {
         for (int2 in new_prerequisites[int]) {
             if (new_prerequisites[int].length == 1) {
-                focuses[ new_prerequisites[int][int2] ].reverse_prerequisites.push(new_prerequisites[int][int2]);
+                focuses[ new_prerequisites[int][int2] ].reverse_prerequisites.push(latestFocusID);
             }
             else {
-                focuses[ new_prerequisites[int][int2] ].reverse_or_prerequisites.push(new_prerequisites[int][int2]);
+                focuses[ new_prerequisites[int][int2] ].reverse_or_prerequisites.push(latestFocusID);
             }
         }
     }
-    draw_focus_prerequisites(latestFocusID);
+    for (int in new_mutually_exclusives) {
+        console.log(`focuses[new_mutually_exclusives[${int}]]`);
+        console.log(`focuses[${new_mutually_exclusives[int]}]`);
+        focuses[new_mutually_exclusives[int]].mutually_exclusives.push(latestFocusID);
+    }
 
     
     $("#focus-panel-focuses").append(`<div onclick="focus_click(${focus.internalID})" class="focus" id="focus-${focus.internalID}" style="left: ${focus.x*96+13}px; top: ${focus.y*130}px">
@@ -174,6 +191,7 @@ function submit_focus() {
     focuses[focus.internalID] = focus;
     focusKeys[focus.id] = focus.internalID;
     focusKeys[focus.internalID] = focus.id;
+    draw_focus_prerequisites(latestFocusID);
     focus_edit_select_focus(focus.internalID);
 }
 function delete_focus(focus) {
@@ -220,7 +238,9 @@ function focus_edit_new_focus() {
         focus_monaco_select.setValue("");
     }
     new_prerequisites = [];
+    new_mutually_exclusives = [];
     do_prerequisites();
+    do_mutuals();
     // $("#focus_x").val(0);
     // $("#focus_y").val(0);
     $("#submit_focus").show();
@@ -247,6 +267,7 @@ function focus_edit_select_focus(id) {
     focus_monaco_select.setValue(focuses[editing_focus_id].block_select)
     $("#submit_focus").hide();
     do_prerequisites();
+    do_mutuals();
 }
 function do_prerequisites() {
     $(".prereq").remove();
@@ -274,7 +295,7 @@ function do_prerequisites() {
                 if (focus != editing_focus_id) {
                     if (focus == temp_list[int][int2]) { //<img class="small-focus-icon" src="assets/focuses/${focusesgfx[focuses[editing_focus_id].icon]}"></img>
                         first = focus;
-                        options += `<option selected id="prereq-${int}-${int2}-${focus}">${focuses[focus].name}</option>`;
+                        options += `<option selected id="prereq-${int}-${int2}-${focus}" value=${focus}>${focuses[focus].name}</option>`;
                     }
                     else {
                         options += `<option id="prereq-${int}-${int2}-${focus}" value=${focus}>${focuses[focus].name}</option>`;
@@ -290,6 +311,87 @@ function do_prerequisites() {
             `);
         }
     }
+}
+function do_mutuals() {
+    $(".mutual").remove();
+    if (editing_focus) {
+        temp_list = focuses[editing_focus_id].mutually_exclusives;
+    }
+    else {
+        temp_list = new_mutually_exclusives;
+    }
+    for (int in temp_list) {
+        options = "";
+        i = 0;
+        first = -1;
+        console.log("log 3")
+        for (focus in focuses) {
+            if (focus != editing_focus_id) {
+                if (focus == temp_list[int]) { //<img class="small-focus-icon" src="assets/focuses/${focusesgfx[focuses[editing_focus_id].icon]}"></img>
+                    first = focus;
+                    options += `<option selected value=${focus} id="mutual-${int}-${focus}">${focuses[focus].name}</option>`;
+                }
+                else {
+                    options += `<option value=${focus} id="mutual-${int}-${focus}">${focuses[focus].name}</option>`;
+                }
+                i += 1;
+            }
+        }
+        $("#focus_mutuals").append(`
+        <select onchange="focus_edit_change_mutual(${int})" id="mutual-${int}" class="mutual-${int} mutual">#
+            ${options}
+        </select>
+        <button id="mutual-${int}-del" onclick="focus_edit_del_mutual(${int})" class="mutual-${int} mutual">-</button>
+        `);
+    }
+}
+function focus_edit_add_mutual() {
+    i = 0;
+    first = -1;
+    for (focus in focuses) {
+        if (focus != editing_focus_id) {
+            if (i == 0) {
+                first = focus;
+            }
+            i += 1;
+        }
+    }
+    if (editing_focus) {
+        focuses[editing_focus_id].mutually_exclusives.push(parseInt(first));
+        focuses[first].mutually_exclusives.push(editing_focus_id);
+        draw_focus_prerequisites(editing_focus_id);
+    }
+    else {
+        new_mutually_exclusives.push(parseInt(first));
+    }
+    do_mutuals();
+}
+function focus_edit_change_mutual(int) {
+    if(editing_focus) {
+        old_mutual = focuses[editing_focus_id].mutually_exclusives[int];
+        focuses[old_mutual].mutually_exclusives.splice(focuses[old_mutual].mutually_exclusives.indexOf(editing_focus_id, 1));
+        focuses[parseInt($(`#mutual-${int}`).val())].mutually_exclusives.push(editing_focus_id);
+        focuses[editing_focus_id].mutually_exclusives[int] = parseInt($(`#mutual-${int}`).val());
+        draw_focus_prerequisites(editing_focus_id);
+    }
+    else {
+        old_mutual = new_mutually_exclusives[int];
+        new_mutually_exclusives[int] = parseInt($(`#mutual-${int}`).val());
+    }
+    do_mutuals();
+}
+function focus_edit_del_mutual(int) {
+    if(editing_focus) {
+        old_mutual = focuses[editing_focus_id].mutually_exclusives[int];
+        focuses[old_mutual].mutually_exclusives.splice(focuses[old_mutual].mutually_exclusives.indexOf(editing_focus_id, 1));
+        focuses[editing_focus_id].mutually_exclusives.splice(focuses[editing_focus_id].mutually_exclusives.indexOf(old_mutual), 1);
+        draw_focus_prerequisites(editing_focus_id);
+    }
+    else {
+        old_mutual = new_mutually_exclusives[int];
+        new_mutually_exclusives.splice(new_mutually_exclusives.indexOf(old_mutual), 1);
+    }
+    do_mutuals();
 }
 function focus_edit_generate_id() {
     $("#focus_id").val("TAG_"+$("#focus_name").val().split(" ").join("_").toLowerCase());
@@ -710,4 +812,3 @@ function focus_edit_del_prereq(int, revfocus=editing_focus_id) {
         }
     }
 }
-
