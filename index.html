@@ -20,7 +20,9 @@
                     <button id="submit_focus" onclick="submit_focus()">Create Focus</button><br>
                     <b>Focus ID</b>: <input onchange="focus_edit_change_id()" type="text" id="focus_id" name="focus_id"><button onclick="focus_edit_generate_id()">Generate</button><br>
                     <b>Focus Name</b>: <input oninput="focus_edit_change_name()" type="text" id="focus_name" name="focus_name"><br>
+                    <b>Focus Description</b>:<br><textarea onchange="focus_edit_change_desc()"  id="focus_desc" name="focus_desc"></textarea><br>
                     <b>Focus Icon</b>: <input onchange="focus_edit_change_icon()" type="text" id="focus_icon" name="focus_icon"> <button class="focus-gfx-button" onclick="focus_gfx_button()">View Focus GFX</button><br>
+                    <b>Length in weeks</b>: <input oninput="focus_edit_change_cost()" type="number" id="focus_cost" name="focus_cost"><br>
                     <b>Position</b>: X: <input onchange="focus_edit_change_x()" min=0 step=1 value=0 type="number" id="focus_x" name="focus_x">Y: <input onchange="focus_edit_change_y()" min=0 step=1 value=0 type="number" id="focus_y" name="focus_y"><br>
                     <b>Mutually Exclusive</b>:<br>
                     <div id="focus_mutual_box">
